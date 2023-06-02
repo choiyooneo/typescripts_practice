@@ -1,4 +1,6 @@
 {
+  //상속을 활용하여 코드의 재사용성을 높이자.
+
   type CoffeeCup = {
     shots: number;
     hasMilk: boolean;
@@ -8,23 +10,12 @@
     makeCoffee(shots: number): CoffeeCup;
   }
 
-  interface CommercialCoffeeMaker {
-    makeCoffee(shots: number): CoffeeCup;
-    fillCoffeeBeans(beans: number): void;
-    clean(): void;
-  }
-
-  class CoffeMachine implements CoffeeMaker, CommercialCoffeeMaker {
+  class CoffeeMachine implements CoffeeMaker {
     private static BEANS_GRAMM_PER_SHOT: number = 7; //class level 로 지정해서 모든 객체마다 공유 되도록 하자.
     private coffeeBeans: number = 0; // instance (object) level
 
-    //생성자를 private로 한이유는 static makeMachine으로만 생성할수있도록 유도 하기위함이다.
-    private constructor(coffeeBeans: number) {
+    protected constructor(coffeeBeans: number) {
       this.coffeeBeans = coffeeBeans;
-    }
-
-    static makeMachine(coffeeBeans: number): CoffeMachine {
-      return new CoffeMachine(coffeeBeans);
     }
 
     fillCoffeeBeans(beans: number) {
@@ -43,7 +34,7 @@
     private grindBeans(shots: number) {
       console.log(`grinding beans for ${shots}`);
 
-      if (this.coffeeBeans < shots * CoffeMachine.BEANS_GRAMM_PER_SHOT) {
+      if (this.coffeeBeans < shots * CoffeeMachine.BEANS_GRAMM_PER_SHOT) {
         throw new Error("Not enough coffee beans!");
       }
     }
@@ -68,13 +59,28 @@
     }
   }
 
-  //interface에 따라 달라지는것 확인
-  const maker: CoffeMachine = CoffeMachine.makeMachine(32);
-  maker.fillCoffeeBeans(32);
-  maker.makeCoffee(2);
+  class CaffeLatteMachine extends CoffeeMachine {
+    private steamMilk(): void {
+      console.log("steaming some milk ...");
+    }
 
-  const maker2: CommercialCoffeeMaker = CoffeMachine.makeMachine(32);
-  maker2.makeCoffee(2);
-  maker2.fillCoffeeBeans(32);
-  maker.clean();
+    constructor(coffeeBeans: number, public readonly serialNumber: string) {
+      super(coffeeBeans);
+    }
+
+    //override 는 그대로 함수를 써주면 된다.
+    makeCoffee(shots: number): CoffeeCup {
+      const coffee = super.makeCoffee(shots); //부모 클래스 접근시.. super만 입력
+      this.steamMilk();
+      return {
+        ...coffee,
+        hasMilk: true,
+      };
+    }
+  }
+
+  const latteMachine = new CaffeLatteMachine(23, "SSS");
+  const coffee = latteMachine.makeCoffee(1);
+  console.log(coffee);
+  console.log(latteMachine.serialNumber);
 }
