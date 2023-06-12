@@ -1,6 +1,5 @@
 {
   //상속을 활용하여 코드의 재사용성을 높이자.
-
   type CoffeeCup = {
     shots: number;
     hasMilk?: boolean;
@@ -11,8 +10,16 @@
     makeCoffee(shots: number): CoffeeCup;
   }
 
+  interface MilkFrother {
+    makeMilk(cup: CoffeeCup): CoffeeCup;
+  }
+
+  interface SugarProvider {
+    addSugar(cup: CoffeeCup): CoffeeCup;
+  }
+
   //싸구려 우유 거품기
-  class CheapMilSteamer {
+  class CheapMilkSteamer implements MilkFrother {
     private steamMilk(): void {
       console.log("Steaming some milk...");
     }
@@ -25,8 +32,40 @@
     }
   }
 
+  class FancyMilkSteamer implements MilkFrother {
+    private steamMilk(): void {
+      console.log("Fancy Steaming some milk...");
+    }
+    makeMilk(cup: CoffeeCup): CoffeeCup {
+      this.steamMilk();
+      return {
+        ...cup,
+        hasMilk: true,
+      };
+    }
+  }
+
+  class ColdMilkSteamer implements MilkFrother {
+    private steamMilk(): void {
+      console.log("Cold Steaming some milk...");
+    }
+    makeMilk(cup: CoffeeCup): CoffeeCup {
+      this.steamMilk();
+      return {
+        ...cup,
+        hasMilk: true,
+      };
+    }
+  }
+
+  class NoMilk implements MilkFrother {
+    makeMilk(cup: CoffeeCup): CoffeeCup {
+      return cup;
+    }
+  }
+
   //설탕 제조기
-  class AutoSugarMixer {
+  class AutoSugarMixer implements SugarProvider {
     private getSugar(): boolean {
       console.log("getting som sugar from candy");
       return true;
@@ -41,11 +80,36 @@
     }
   }
 
+  class SugarMixer implements SugarProvider {
+    private getSugar(): boolean {
+      console.log("getting som sugar from jar!!");
+      return true;
+    }
+
+    addSugar(cup: CoffeeCup): CoffeeCup {
+      const sugar = this.getSugar();
+      return {
+        ...cup,
+        hasSugar: sugar,
+      };
+    }
+  }
+
+  class NoSugar implements SugarProvider {
+    addSugar(cup: CoffeeCup): CoffeeCup {
+      return cup;
+    }
+  }
+
   class CoffeeMachine implements CoffeeMaker {
     private static BEANS_GRAMM_PER_SHOT: number = 7; //class level 로 지정해서 모든 객체마다 공유 되도록 하자.
     private coffeeBeans: number = 0; // instance (object) level
 
-    protected constructor(coffeeBeans: number) {
+    constructor(
+      coffeeBeans: number,
+      private milk: MilkFrother,
+      private sugar: SugarProvider
+    ) {
       this.coffeeBeans = coffeeBeans;
     }
 
@@ -86,54 +150,24 @@
     makeCoffee(shots: number): CoffeeCup {
       this.grindBeans(shots);
       this.preHeat();
-      return this.extract(shots);
-    }
-  }
-
-  class CaffeLatteMachine extends CoffeeMachine {
-    constructor(
-      coffeeBeans: number,
-      public readonly serialNumber: string,
-      private milkFother: CheapMilSteamer
-    ) {
-      super(coffeeBeans);
-    }
-
-    //override 는 그대로 함수를 써주면 된다.
-    makeCoffee(shots: number): CoffeeCup {
-      const coffee = super.makeCoffee(shots); //부모 클래스 접근시.. super만 입력
-      return this.milkFother.makeMilk(coffee);
-    }
-  }
-
-  class SweetCoffeeMaker extends CoffeeMachine {
-    //DI 를 이용하여 sugar를 받는다.
-    constructor(beans: number, private sugar: AutoSugarMixer) {
-      super(beans);
-    }
-
-    makeCoffee(shots: number): CoffeeCup {
-      const coffee = super.makeCoffee(shots);
-
-      return this.sugar.addSugar(coffee);
-    }
-  }
-
-  class SweetCaffeLatteMachine extends CoffeeMachine {
-    //사실.. 아래와 같은 형태는 구체 클래스를 DI를 한 형태라 커플링이 심하다..
-    //그래서 interface형태로 구현하는것이 좋다.
-    constructor(
-      private beans: number,
-      private milk: CheapMilSteamer,
-      private sugar: AutoSugarMixer
-    ) {
-      super(beans);
-    }
-
-    makeCoffee(shots: number): CoffeeCup {
-      const coffee = super.makeCoffee(shots);
+      const coffee = this.extract(shots);
       const sugarAdded = this.sugar.addSugar(coffee);
       return this.milk.makeMilk(sugarAdded);
     }
   }
+
+  // Milk
+  const cheapMilkMaker = new CheapMilkSteamer();
+  const fancyMilkMaker = new FancyMilkSteamer();
+  const coldMilkMaker = new ColdMilkSteamer();
+  const noMilk = new NoMilk();
+
+  // Sugar
+  const candySugar = new AutoSugarMixer();
+  const sugar = new SugarMixer();
+  const noSugar = new NoSugar();
+
+  // 인터페이스를 활용하여 조립이 가능하다.
+  const sweetCandyMachine = new CoffeeMachine(12, noMilk, candySugar);
+  // const sweetMachine = new SweetCoffeeMaker(12, sugar);
 }
