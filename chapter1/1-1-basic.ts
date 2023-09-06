@@ -22,6 +22,7 @@
   age = 1;
 
   //함수로 사용할때 예제.. 주로 무언가를 찾을때 없으면... undefined
+  // 값을 찾을때 무언가가 있고 없을때.. 
   function find(): number | undefined {
     return undefined;
   }
