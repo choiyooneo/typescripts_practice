@@ -18,6 +18,6 @@
   //* 문제는... 아래와 같은 코드가 가능하다는것이다.
   day = 0; // 타입이 보장 되지 않는다는것이다..
 
-  // 아래처럼 enum 대신 사용하자.
+  // 아래처럼 enum 대신 Union type을 사용하자.
   type DaysOfWeek = "Monday" | "Tuesday";
 }
